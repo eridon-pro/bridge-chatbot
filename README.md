@@ -1,0 +1,111 @@
+# AIチャットボット
+
+PythonとFlaskを使用したAIチャットボットアプリケーションです。Google Gemini APIを使用して対話型のチャットボットを実装しています。
+
+## 機能
+
+- Google Gemini APIを使用したAIチャット
+- **複数のモデルから選択可能**（Gemini 3 Pro/Flash、Gemini 2.5 Pro/Flashなど。デフォルト: Gemini 2.5 Flash）
+- モダンで美しいUIデザイン
+- リアルタイムでのメッセージ送受信
+- チャット履歴の管理（セッション単位）
+- エラーハンドリング
+
+## セットアップ
+
+**動作確認環境:** Python 3.12.3
+
+### 1. 仮想環境の作成と有効化
+
+```bash
+python3 -m venv venv
+```
+
+**Linux/macOSの場合:**
+```bash
+source venv/bin/activate
+```
+
+**Windowsの場合:**
+```bash
+venv\Scripts\activate
+```
+
+### 2. 依存関係のインストール
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 環境変数の設定
+
+`.env.example`を`.env`にコピーして、Gemini APIキーを設定してください：
+
+```bash
+cp .env.example .env
+```
+
+`.env`ファイルを編集して、実際のAPIキーを設定：
+
+```
+GEMINI_API_KEY=your-actual-api-key-here
+```
+
+Gemini APIキーは [Google AI Studio](https://aistudio.google.com/app/apikey) から取得できます。
+
+### 4. アプリケーションの起動
+
+**通常モード（デバッグ無効）:**
+```bash
+python app.py
+```
+
+**デバッグモードで起動:**
+```bash
+python app.py --debug
+```
+
+**カスタムホスト・ポートで起動:**
+```bash
+python app.py --host 127.0.0.1 --port 8080
+```
+
+**オプション:**
+- `--debug`: デバッグモードを有効にする（デフォルト: 無効）
+- `--host`: ホストアドレスを指定（デフォルト: 0.0.0.0）
+- `--port`: ポート番号を指定（デフォルト: 5000）
+
+アプリケーションは `http://localhost:5000` で起動します。
+
+## 使い方
+
+1. ブラウザで `http://localhost:5000` にアクセス
+2. ヘッダー部分のドロップダウンから使用するモデルを選択（デフォルト: Gemini 2.5 Flash）
+3. チャット入力欄にメッセージを入力
+4. 「送信」ボタンをクリックするか、Enterキーを押して送信
+5. AIからの応答が表示されます
+
+**注意**: モデルを変更すると、現在のチャット履歴がクリアされます。
+
+## プロジェクト構造
+
+```
+chatbot/
+├── app.py                 # Flaskアプリケーションのメインファイル
+├── templates/
+│   └── index.html        # チャットボットのUI
+├── requirements.txt       # Python依存関係
+├── .env.example          # 環境変数のテンプレート
+└── README.md             # このファイル
+```
+
+## 注意事項
+
+- 本番環境では、チャット履歴の保存にデータベースを使用することを推奨します
+- APIキーは絶対に公開リポジトリにコミットしないでください
+- Gemini APIの使用には料金が発生する場合があります（無料枠あり）
+- チャットセッションはメモリ内に保存されるため、サーバー再起動で履歴は失われます
+
+## ライセンス
+
+MIT

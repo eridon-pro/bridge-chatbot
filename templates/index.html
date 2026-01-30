@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AIチャットボット</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --vh: 1vh;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%);
+            background-attachment: fixed;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(37, 99, 235, 0.3) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 900px;
+            height: 92vh;
+            height: calc(var(--vh, 1vh) * 92);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 24px 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .model-selector-wrapper {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .model-selector-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            display: block;
+        }
+
+        .model-select-wrapper {
+            position: relative;
+        }
+
+        .model-select {
+            width: 100%;
+            padding: 12px 16px;
+            padding-right: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .model-select:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .model-select:focus {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        .model-select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 10px;
+            pointer-events: none;
+            transition: transform 0.3s;
+        }
+
+        .model-select-wrapper:hover::after {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .model-select option {
+            background: #1e40af;
+            color: white;
+            padding: 10px;
+        }
+
+        .clear-button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .clear-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .clear-button:active {
+            transform: translateY(0);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(37, 99, 235, 0.3) transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(37, 99, 235, 0.3);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(37, 99, 235, 0.5);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 14px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            line-height: 1.6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Markdownスタイリング */
+        .message-content h1,
+        .message-content h2,
+        .message-content h3,
+        .message-content h4,
+        .message-content h5,
+        .message-content h6 {
+            margin-top: 1.2em;
+            margin-bottom: 0.6em;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .message-content h1 { font-size: 1.5em; }
+        .message-content h2 { font-size: 1.3em; }
+        .message-content h3 { font-size: 1.1em; }
+
+        .message-content p {
+            margin-bottom: 0.8em;
+        }
+
+        .message-content ul,
+        .message-content ol {
+            margin: 0.8em 0;
+            padding-left: 1.5em;
+        }
+
+        .message-content li {
+            margin: 0.4em 0;
+        }
+
+        .message-content ul li {
+            list-style-type: disc;
+        }
+
+        .message-content ol li {
+            list-style-type: decimal;
+        }
+
+        .message-content code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message.user .message-content code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 0.8em 0;
+        }
+
+        .message.user .message-content pre {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-content blockquote {
+            border-left: 4px solid rgba(59, 130, 246, 0.5);
+            padding-left: 1em;
+            margin: 0.8em 0;
+            opacity: 0.9;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+        }
+
+        .message-content em {
+            font-style: italic;
+        }
+
+        .message-content a {
+            color: inherit;
+            text-decoration: underline;
+            opacity: 0.8;
+        }
+
+        .message-content a:hover {
+            opacity: 1;
+        }
+
+        .message-content table {
+            border-collapse: collapse;
+            margin: 0.8em 0;
+            width: 100%;
+        }
+
+        .message-content th,
+        .message-content td {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .message.user .message-content th,
+        .message.user .message-content td {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content th {
+            background: rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .message.user .message-content th {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .message-content hr {
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            margin: 1.2em 0;
+        }
+
+        .message.user .message-content hr {
+            border-top-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .message.ai .message-content {
+            background: white;
+            color: #1e293b;
+            border-bottom-left-radius: 6px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-input-container {
+            padding: 20px 24px;
+            background: white;
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f8fafc;
+        }
+
+        .chat-input:focus {
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .send-button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            white-space: nowrap;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            text-align: center;
+            border: 1px solid #fca5a5;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+        }
+
+        /* タブレット対応 */
+        @media (max-width: 1024px) {
+            .chat-container {
+                width: 95%;
+                max-width: none;
+            }
+        }
+
+        /* スマートフォン対応 */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                height: calc(var(--vh, 1vh) * 100);
+                max-height: 100vh;
+                max-height: calc(var(--vh, 1vh) * 100);
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .chat-header {
+                padding: 16px 20px;
+            }
+
+            .header-title {
+                font-size: 22px;
+                margin-bottom: 12px;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .model-selector-wrapper {
+                width: 100%;
+            }
+
+            .model-selector-label {
+                font-size: 11px;
+            }
+
+            .model-select {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+
+            .clear-button {
+                width: 100%;
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
+            .message {
+                margin-bottom: 16px;
+            }
+
+            .message-content {
+                max-width: 85%;
+                padding: 12px 16px;
+                font-size: 15px;
+                line-height: 1.5;
+            }
+
+            .message-content h1 { font-size: 1.3em; }
+            .message-content h2 { font-size: 1.2em; }
+            .message-content h3 { font-size: 1.1em; }
+
+            .chat-input-container {
+                padding: 12px 16px;
+                gap: 8px;
+            }
+
+            .chat-input {
+                padding: 12px 16px;
+                font-size: 16px; /* iOSでズームを防ぐ */
+                border-radius: 12px;
+            }
+
+            .send-button {
+                padding: 12px 24px;
+                font-size: 14px;
+                border-radius: 12px;
+                min-width: 70px;
+            }
+
+            /* テーブルのスクロール対応 */
+            .message-content table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .message-content th,
+            .message-content td {
+                padding: 6px 8px;
+                font-size: 14px;
+            }
+
+            /* コードブロックのフォントサイズ調整 */
+            .message-content code {
+                font-size: 13px;
+            }
+
+            .message-content pre {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+
+        /* 小さなスマートフォン対応 */
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 20px;
+            }
+
+            .message-content {
+                max-width: 90%;
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+
+            .chat-input {
+                font-size: 16px; /* iOSでズームを防ぐ */
+            }
+
+            .send-button {
+                padding: 12px 20px;
+                font-size: 13px;
+                min-width: 60px;
+            }
+        }
+
+        /* 横画面対応 */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .chat-header {
+                padding: 12px 20px;
+            }
+
+            .header-title {
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+
+            .chat-messages {
+                padding: 12px 16px;
+            }
+
+            .message {
+                margin-bottom: 12px;
+            }
+
+            .message-content {
+                padding: 10px 14px;
+            }
+        }
+
+        /* タッチデバイス用の最適化 */
+        @media (hover: none) and (pointer: coarse) {
+            .send-button,
+            .clear-button,
+            .model-select {
+                -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
+            }
+
+            .send-button:active,
+            .clear-button:active {
+                transform: scale(0.98);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-title">🤖 AIチャットボット</div>
+            <div class="header-controls">
+                <div class="model-selector-wrapper">
+                    <label class="model-selector-label" for="modelSelect">モデル選択</label>
+                    <div class="model-select-wrapper">
+                        <select id="modelSelect" class="model-select" onchange="onModelChange()">
+                            <option value="">読み込み中...</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="clear-button" onclick="clearHistory()">🗑️ 履歴をクリア</button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai">
+                <div class="message-content">
+                    こんにちは！何かお手伝いできることはありますか？
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input 
+                type="text" 
+                class="chat-input" 
+                id="messageInput" 
+                placeholder="メッセージを入力してください..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button class="send-button" id="sendButton" onclick="sendMessage()">送信</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const modelSelect = document.getElementById('modelSelect');
+        let currentModel = 'gemini-2.5-flash'; // デフォルトモデル
+
+        // モデル名からハイフン以降を削除する関数
+        function formatModelName(name) {
+            if (!name) return '';
+            // ハイフン以降を削除
+            const index = name.indexOf('-');
+            return index !== -1 ? name.substring(0, index).trim() : name.trim();
+        }
+
+        // ページ読み込み時にモデル一覧を取得
+        async function loadModels() {
+            try {
+                const response = await fetch('/models');
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.models) {
+                    modelSelect.innerHTML = '';
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.id;
+                        // モデル名からハイフン以降を削除（説明文は表示しない）
+                        const displayName = formatModelName(model.name);
+                        option.textContent = displayName;
+                        modelSelect.appendChild(option);
+                    });
+                    
+                    // デフォルトモデルを選択（存在する場合）
+                    if (data.models.some(m => m.id === currentModel)) {
+                        modelSelect.value = currentModel;
+                    } else if (data.models.length > 0) {
+                        // デフォルトモデルが存在しない場合は最初のモデルを選択
+                        currentModel = data.models[0].id;
+                        modelSelect.value = currentModel;
+                    }
+                }
+            } catch (error) {
+                console.error('モデル一覧の取得に失敗しました:', error);
+                // フォールバック: デフォルトモデルのみを表示
+                modelSelect.innerHTML = '<option value="gemini-1.5-flash">Gemini 1.5 Flash</option>';
+            }
+        }
+
+        function onModelChange() {
+            const selectedModel = modelSelect.value;
+            if (selectedModel && selectedModel !== currentModel) {
+                if (confirm('モデルを変更すると、現在のチャット履歴がクリアされます。続行しますか？')) {
+                    currentModel = selectedModel;
+                    clearHistory();
+                } else {
+                    // 変更をキャンセルして元のモデルに戻す
+                    modelSelect.value = currentModel;
+                }
+            }
+        }
+
+        function addMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            // Markdownをレンダリング（AIメッセージのみ、ユーザーメッセージはプレーンテキスト）
+            if (!isUser && typeof marked !== 'undefined') {
+                // MarkdownをHTMLに変換
+                contentDiv.innerHTML = marked.parse(content);
+            } else {
+                // ユーザーメッセージはプレーンテキスト（XSS対策）
+                contentDiv.textContent = content;
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // スクロールを最下部に（モバイル対応）
+            scrollToBottom();
+        }
+
+        function showLoading() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.id = 'loadingMessage';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = '<div class="loading"></div>';
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeLoading() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            chatMessages.appendChild(errorDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // 3秒後にエラーメッセージを削除
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                return;
+            }
+
+            // UIを更新
+            addMessage(message, true);
+            messageInput.value = '';
+            sendButton.disabled = true;
+            showLoading();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        model: currentModel
+                    })
+                });
+
+                const data = await response.json();
+
+                removeLoading();
+
+                if (response.ok) {
+                    addMessage(data.response, false);
+                } else {
+                    showError(data.error || 'エラーが発生しました');
+                }
+            } catch (error) {
+                removeLoading();
+                showError('ネットワークエラーが発生しました。接続を確認してください。');
+                console.error('Error:', error);
+            } finally {
+                sendButton.disabled = false;
+                // デスクトップのみ自動フォーカス
+                if (window.innerWidth > 768) {
+                    messageInput.focus();
+                }
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function clearHistory() {
+            if (!confirm('チャット履歴をクリアしますか？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                if (response.ok) {
+                    const welcomeMessage = 'こんにちは！何かお手伝いできることはありますか？';
+                    chatMessages.innerHTML = `
+                        <div class="message ai">
+                            <div class="message-content">${welcomeMessage}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showError('履歴のクリアに失敗しました');
+                console.error('Error:', error);
+            }
+        }
+
+        // モバイルでのキーボード表示時のレイアウト調整
+        function adjustForMobileKeyboard() {
+            if (window.innerWidth <= 768) {
+                // キーボード表示時にビューポートの高さを調整
+                const viewportHeight = window.innerHeight;
+                document.documentElement.style.setProperty('--vh', `${viewportHeight * 0.01}px`);
+            }
+        }
+
+        // ビューポートの高さをCSS変数として設定
+        function setViewportHeight() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // リサイズ時にビューポートの高さを更新
+        window.addEventListener('resize', () => {
+            setViewportHeight();
+            adjustForMobileKeyboard();
+        });
+
+        // スクロール位置を最下部に保つ（モバイル用）
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        }
+
+        // 入力欄フォーカス時にスクロール
+        messageInput.addEventListener('focus', () => {
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    scrollToBottom();
+                }, 300);
+            }
+        });
+
+        // ページ読み込み時にモデル一覧を読み込み、初期化
+        loadModels();
+        setViewportHeight();
+        
+        // デスクトップのみ自動フォーカス（モバイルではキーボードが表示されるのを防ぐ）
+        if (window.innerWidth > 768) {
+            messageInput.focus();
+        }
+    </script>
+</body>
+</html>
