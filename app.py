@@ -23,7 +23,7 @@ chat_sessions = {}
 SYSTEM_INSTRUCTION = 'あなたは親切で役立つアシスタントです。日本語で応答してください。'
 
 # デフォルトモデル
-DEFAULT_MODEL = 'gemini-2.5-flash'
+DEFAULT_MODEL = 'gemini-3-flash-preview'
 
 # 画像生成対応モデル（モデル名に含まれるキーワード）
 IMAGE_GENERATION_MODEL_KEYWORDS = ['image', 'imagen']

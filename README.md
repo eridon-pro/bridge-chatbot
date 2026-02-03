@@ -5,7 +5,7 @@ PythonとFlaskを使用したAIチャットボットアプリケーションで�
 ## 機能
 
 - Google Gemini APIを使用したAIチャット
-- **複数のモデルから選択可能**（Gemini 3 Pro/Flash、Gemini 2.5 Pro/Flashなど。デフォルト: Gemini 2.5 Flash）
+- **複数のモデルから選択可能**（Gemini 3 Pro/Flash、Gemini 2.5 Pro/Flashなど。デフォルト: Gemini 3 Flash Preview）
 - **プロンプトテンプレート** - よく使うプロンプト（要約、翻訳、箇条書きなど）をワンクリックで入力欄に挿入
 - **会話エクスポート** - チャット履歴をMarkdown（.md）またはテキスト（.txt）でダウンロード
 - **スタンプ送信** - 絵文字や短いフレーズをスタンプとして素早く送信
@@ -84,7 +84,7 @@ python app.py --host 127.0.0.1 --port 8080
 ## 使い方
 
 1. ブラウザで `http://localhost:5000` にアクセス
-2. ヘッダー部分のドロップダウンから使用するモデルを選択（デフォルト: Gemini 2.5 Flash）
+2. ヘッダー部分のドロップダウンから使用するモデルを選択（デフォルト: Gemini 3 Flash Preview）
 3. チャット入力欄にメッセージを入力
 4. 「送信」ボタンをクリックするか、Enterキーを押して送信
 5. AIからの応答が表示されます
