@@ -171,11 +171,144 @@
             white-space: nowrap;
         }
 
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .export-wrapper {
+            position: relative;
+        }
+
+        .export-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .export-dropdown.show {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .export-option {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #1e40af;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .export-option:hover {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
         .clear-button:hover {
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.5);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .input-options {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 24px 0;
+            flex-wrap: wrap;
+        }
+
+        .template-select {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #f8fafc;
+            cursor: pointer;
+            outline: none;
+            min-width: 180px;
+        }
+
+        .template-select:hover {
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .template-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .stamp-wrapper {
+            position: relative;
+        }
+
+        .stamp-toggle {
+            padding: 8px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 20px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stamp-toggle:hover {
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .stamp-panel {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            margin-bottom: 8px;
+            padding: 12px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .stamp-panel.show {
+            display: flex;
+        }
+
+        .stamp-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 24px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stamp-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.1);
+        }
+
+        .stamp-btn:last-child {
+            font-size: 14px;
         }
 
         .clear-button:active {
@@ -370,6 +503,21 @@
 
         .message.user .message-content hr {
             border-top-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-images {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .message-content .generated-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            object-fit: contain;
         }
 
         .message.user .message-content {
@@ -662,13 +810,50 @@
                         </select>
                     </div>
                 </div>
-                <button class="clear-button" onclick="clearHistory()">🗑️ 履歴をクリア</button>
+                <div class="header-buttons">
+                    <div class="export-wrapper">
+                        <button class="clear-button" id="exportBtn">📥 エクスポート ▼</button>
+                        <div class="export-dropdown" id="exportDropdown">
+                            <button type="button" class="export-option" onclick="exportConversation('md'); document.getElementById('exportDropdown').classList.remove('show')">Markdown (.md)</button>
+                            <button type="button" class="export-option" onclick="exportConversation('txt'); document.getElementById('exportDropdown').classList.remove('show')">テキスト (.txt)</button>
+                        </div>
+                    </div>
+                    <button class="clear-button" onclick="clearHistory()">🗑️ 履歴をクリア</button>
+                </div>
             </div>
         </div>
         <div class="chat-messages" id="chatMessages">
             <div class="message ai">
                 <div class="message-content">
                     こんにちは！何かお手伝いできることはありますか？
+                </div>
+            </div>
+        </div>
+        <div class="input-options">
+            <div class="template-wrapper">
+                <select id="templateSelect" class="template-select" onchange="applyTemplate()">
+                    <option value="">📝 テンプレート</option>
+                    <option value="要約して">要約して</option>
+                    <option value="コードを説明して">コードを説明して</option>
+                    <option value="日本語を英語に翻訳して">日本語→英語に翻訳</option>
+                    <option value="英語を日本語に翻訳して">英語→日本語に翻訳</option>
+                    <option value="箇条書きで整理して">箇条書きで整理して</option>
+                    <option value="もっと詳しく説明して">もっと詳しく説明して</option>
+                    <option value="簡単な言葉で説明して">簡単な言葉で説明して</option>
+                </select>
+            </div>
+            <div class="stamp-wrapper">
+                <button type="button" class="stamp-toggle" id="stampToggle" onclick="toggleStampPanel()" title="スタンプ">😀</button>
+                <div class="stamp-panel" id="stampPanel">
+                    <button type="button" class="stamp-btn" onclick="sendStamp('👍')" title="いいね">👍</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('😊')" title="笑顔">😊</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('🙏')" title="お願い">🙏</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('❤️')" title="ありがとう">❤️</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('👏')" title="拍手">👏</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('🤔')" title="考える">🤔</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('💡')" title="なるほど">💡</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('ありがとう')" title="ありがとう">ありがとう</button>
+                    <button type="button" class="stamp-btn" onclick="sendStamp('了解')" title="了解">了解</button>
                 </div>
             </div>
         </div>
@@ -691,12 +876,10 @@
         const modelSelect = document.getElementById('modelSelect');
         let currentModel = 'gemini-2.5-flash'; // デフォルトモデル
 
-        // モデル名からハイフン以降を削除する関数
+        // モデル名をそのまま返す関数（加工しない）
         function formatModelName(name) {
             if (!name) return '';
-            // ハイフン以降を削除
-            const index = name.indexOf('-');
-            return index !== -1 ? name.substring(0, index).trim() : name.trim();
+            return name.trim();
         }
 
         // ページ読み込み時にモデル一覧を取得
@@ -705,14 +888,14 @@
                 const response = await fetch('/models');
                 const data = await response.json();
                 
-                if (data.status === 'success' && data.models) {
+                if (response.ok && data.status === 'success' && data.models) {
                     modelSelect.innerHTML = '';
+                    modelSelect.disabled = false;
                     data.models.forEach(model => {
                         const option = document.createElement('option');
                         option.value = model.id;
-                        // モデル名からハイフン以降を削除（説明文は表示しない）
-                        const displayName = formatModelName(model.name);
-                        option.textContent = displayName;
+                        // モデルIDを表示
+                        option.textContent = model.id;
                         modelSelect.appendChild(option);
                     });
                     
@@ -724,11 +907,19 @@
                         currentModel = data.models[0].id;
                         modelSelect.value = currentModel;
                     }
+                } else {
+                    // エラーが発生した場合
+                    const errorMsg = data.error || 'モデル一覧の取得に失敗しました';
+                    console.error('モデル一覧の取得エラー:', errorMsg);
+                    modelSelect.innerHTML = `<option value="">${errorMsg}</option>`;
+                    modelSelect.disabled = true;
+                    showError('モデル一覧を取得できませんでした。APIキーの設定を確認してください。');
                 }
             } catch (error) {
                 console.error('モデル一覧の取得に失敗しました:', error);
-                // フォールバック: デフォルトモデルのみを表示
-                modelSelect.innerHTML = '<option value="gemini-1.5-flash">Gemini 1.5 Flash</option>';
+                modelSelect.innerHTML = '<option value="">モデル一覧の取得に失敗しました</option>';
+                modelSelect.disabled = true;
+                showError('モデル一覧を取得できませんでした。サーバーに接続できません。');
             }
         }
 
@@ -745,7 +936,7 @@
             }
         }
 
-        function addMessage(content, isUser) {
+        function addMessage(content, isUser, images = []) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
             
@@ -755,10 +946,24 @@
             // Markdownをレンダリング（AIメッセージのみ、ユーザーメッセージはプレーンテキスト）
             if (!isUser && typeof marked !== 'undefined') {
                 // MarkdownをHTMLに変換
-                contentDiv.innerHTML = marked.parse(content);
+                contentDiv.innerHTML = content ? marked.parse(content) : '';
             } else {
                 // ユーザーメッセージはプレーンテキスト（XSS対策）
-                contentDiv.textContent = content;
+                contentDiv.textContent = content || '';
+            }
+            
+            // 画像を表示
+            if (images && images.length > 0) {
+                const imagesDiv = document.createElement('div');
+                imagesDiv.className = 'message-images';
+                images.forEach(src => {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.alt = '生成された画像';
+                    img.className = 'generated-image';
+                    imagesDiv.appendChild(img);
+                });
+                contentDiv.appendChild(imagesDiv);
             }
             
             messageDiv.appendChild(contentDiv);
@@ -832,7 +1037,7 @@
                 removeLoading();
 
                 if (response.ok) {
-                    addMessage(data.response, false);
+                    addMessage(data.response || '', false, data.images || []);
                 } else {
                     showError(data.error || 'エラーが発生しました');
                 }
@@ -854,6 +1059,90 @@
                 event.preventDefault();
                 sendMessage();
             }
+        }
+
+        // プロンプトテンプレート: 選択したテンプレートを入力欄に挿入
+        function applyTemplate() {
+            const templateSelect = document.getElementById('templateSelect');
+            const value = templateSelect.value;
+            if (value) {
+                messageInput.value = value;
+                messageInput.focus();
+                templateSelect.value = ''; // 選択をリセット
+            }
+        }
+
+        // 会話エクスポート: チャット履歴をMarkdownまたはテキストでダウンロード
+        function exportConversation(format) {
+            const messages = chatMessages.querySelectorAll('.message');
+            if (messages.length === 0) return;
+
+            const isMarkdown = format !== 'txt';
+            let content = isMarkdown ? `# AIチャット履歴\n\n` : '';
+            const date = new Date().toLocaleString('ja-JP');
+
+            messages.forEach(msg => {
+                const isUser = msg.classList.contains('user');
+                const contentEl = msg.querySelector('.message-content');
+                if (!contentEl) return;
+
+                let text = '';
+                if (contentEl.querySelector('.message-images')) {
+                    text = contentEl.childNodes[0]?.textContent || '';
+                } else {
+                    text = contentEl.textContent || contentEl.innerText || '';
+                }
+
+                if (isMarkdown) {
+                    content += `## ${isUser ? 'ユーザー' : 'AI'}\n\n${text}\n\n`;
+                } else {
+                    content += `[${isUser ? 'ユーザー' : 'AI'}]\n${text}\n\n`;
+                }
+            });
+
+            const ext = isMarkdown ? 'md' : 'txt';
+            const filename = `chat-export-${date.replace(/[/:]/g, '-').replace(/\s/g, '_')}.${ext}`;
+            const blob = new Blob([content], { type: isMarkdown ? 'text/markdown' : 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // スタンプパネルの表示/非表示
+        function toggleStampPanel() {
+            const panel = document.getElementById('stampPanel');
+            panel.classList.toggle('show');
+        }
+
+        // パネル外クリックでスタンプパネルを閉じる
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('stampPanel');
+            const toggle = document.getElementById('stampToggle');
+            if (panel && panel.classList.contains('show') && !panel.contains(e.target) && !toggle.contains(e.target)) {
+                panel.classList.remove('show');
+            }
+            // エクスポートドロップダウンを閉じる
+            const exportDropdown = document.getElementById('exportDropdown');
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportDropdown && exportDropdown.classList.contains('show') && !exportDropdown.contains(e.target) && !exportBtn.contains(e.target)) {
+                exportDropdown.classList.remove('show');
+            }
+        });
+
+        // エクスポートボタンクリックでドロップダウンをトグル
+        document.getElementById('exportBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('exportDropdown').classList.toggle('show');
+        });
+
+        // スタンプ送信: スタンプをメッセージとして送信
+        function sendStamp(text) {
+            document.getElementById('stampPanel').classList.remove('show');
+            messageInput.value = text;
+            sendMessage();
         }
 
         async function clearHistory() {

@@ -22,6 +22,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+list_models.py
 
 # 環境変数ファイル
 .env
